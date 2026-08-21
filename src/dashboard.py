@@ -241,7 +241,7 @@ display_data = display_data.rename(
 
 st.dataframe(
     display_data,
-    use_container_width=True,
+    width='stretch',
     hide_index=True
 )
 
@@ -260,7 +260,7 @@ high_risk_customers = display_data[
 
 st.dataframe(
     high_risk_customers,
-    use_container_width=True,
+    width='stretch',
     hide_index=True
 )
 
@@ -291,7 +291,7 @@ st.bar_chart(
 
 st.dataframe(
     importance,
-    use_container_width=True,
+    width='stretch',
     hide_index=True
 )
 
