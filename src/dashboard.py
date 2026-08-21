@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import joblib
-
+import requests
 
 # --------------------------------------------------
 # Page configuration
@@ -13,9 +13,8 @@ st.set_page_config(
     layout="wide"
 )
 
-
 # --------------------------------------------------
-# Load large dataset and model
+# Load dataset and model
 # --------------------------------------------------
 
 data = pd.read_csv(
@@ -25,7 +24,6 @@ data = pd.read_csv(
 model = joblib.load(
     "models/churn_model_large.pkl"
 )
-
 
 # --------------------------------------------------
 # Model features
@@ -41,9 +39,8 @@ features = [
     "discount_used"
 ]
 
-
 # --------------------------------------------------
-# Functions
+# Risk classification
 # --------------------------------------------------
 
 def get_risk_level(probability):
@@ -57,6 +54,9 @@ def get_risk_level(probability):
     else:
         return "LOW"
 
+# --------------------------------------------------
+# Recovery recommendation
+# --------------------------------------------------
 
 def get_recovery_action(
     risk_level,
@@ -80,11 +80,12 @@ def get_recovery_action(
             return "Retention offer"
 
     elif risk_level == "MEDIUM":
+
         return "Engagement reminder"
 
     else:
-        return "No immediate action"
 
+        return "No immediate action"
 
 # --------------------------------------------------
 # Existing customer predictions
@@ -94,17 +95,14 @@ data["churn_probability"] = model.predict_proba(
     data[features]
 )[:, 1]
 
-
 data["revenue_at_risk"] = (
     data["monthly_revenue"]
     * data["churn_probability"]
 )
 
-
 data["risk_level"] = data["churn_probability"].apply(
     get_risk_level
 )
-
 
 data["recovery_action"] = data.apply(
     lambda row: get_recovery_action(
@@ -116,12 +114,10 @@ data["recovery_action"] = data.apply(
     axis=1
 )
 
-
 data = data.sort_values(
     by="revenue_at_risk",
     ascending=False
 )
-
 
 # --------------------------------------------------
 # Dashboard title
@@ -133,7 +129,6 @@ st.write(
     "Machine Learning powered customer churn "
     "and revenue risk analysis."
 )
-
 
 # --------------------------------------------------
 # Dashboard metrics
@@ -149,61 +144,55 @@ medium_risk = (
     data["risk_level"] == "MEDIUM"
 ).sum()
 
-low_risk = (
-    data["risk_level"] == "LOW"
-).sum()
-
-total_revenue_at_risk = data["revenue_at_risk"].sum()
-
+total_revenue_at_risk = (
+    data["revenue_at_risk"].sum()
+)
 
 col1, col2, col3, col4 = st.columns(4)
 
-
 with col1:
+
     st.metric(
         "Total Customers",
         total_customers
     )
 
-
 with col2:
+
     st.metric(
         "High Risk",
         high_risk
     )
 
-
 with col3:
+
     st.metric(
         "Medium Risk",
         medium_risk
     )
 
-
 with col4:
+
     st.metric(
         "Revenue at Risk",
         f"₹{total_revenue_at_risk:,.2f}"
     )
 
-
 # --------------------------------------------------
-# Risk distribution
+# Customer risk distribution
 # --------------------------------------------------
 
-st.subheader("Customer Risk Distribution")
+st.subheader("📊 Customer Risk Distribution")
 
 risk_counts = data["risk_level"].value_counts()
 
 st.bar_chart(risk_counts)
 
-
 # --------------------------------------------------
-# Customer revenue risk table
+# Customer revenue risk
 # --------------------------------------------------
 
-st.subheader("Customer Revenue Risk")
-
+st.subheader("💰 Customer Revenue Risk")
 
 display_data = data[
     [
@@ -216,16 +205,13 @@ display_data = data[
     ]
 ].copy()
 
-
 display_data["churn_probability"] = (
     display_data["churn_probability"] * 100
 ).round(2)
 
-
 display_data["revenue_at_risk"] = (
     display_data["revenue_at_risk"]
 ).round(2)
-
 
 display_data = display_data.rename(
     columns={
@@ -238,13 +224,11 @@ display_data = display_data.rename(
     }
 )
 
-
 st.dataframe(
     display_data,
-    width='stretch',
+    width="stretch",
     hide_index=True
 )
-
 
 # --------------------------------------------------
 # Priority recovery customers
@@ -252,18 +236,15 @@ st.dataframe(
 
 st.subheader("🚨 Priority Recovery Customers")
 
-
 high_risk_customers = display_data[
     display_data["Risk Level"] == "HIGH"
 ]
 
-
 st.dataframe(
     high_risk_customers,
-    width='stretch',
+    width="stretch",
     hide_index=True
 )
-
 
 # --------------------------------------------------
 # Feature importance
@@ -271,30 +252,25 @@ st.dataframe(
 
 st.subheader("🔍 ML Feature Importance")
 
-
 importance = pd.DataFrame({
     "Feature": features,
     "Importance": model.feature_importances_
 })
-
 
 importance = importance.sort_values(
     by="Importance",
     ascending=False
 )
 
-
 st.bar_chart(
     importance.set_index("Feature")["Importance"]
 )
 
-
 st.dataframe(
     importance,
-    width='stretch',
+    width="stretch",
     hide_index=True
 )
-
 
 # --------------------------------------------------
 # Business interpretation
@@ -302,9 +278,7 @@ st.dataframe(
 
 st.subheader("💡 Business Interpretation")
 
-
 top_feature = importance.iloc[0]["Feature"]
-
 
 st.write(
     f"The model identifies **{top_feature}** as the "
@@ -312,32 +286,45 @@ st.write(
     "customer attributes."
 )
 
-
 # --------------------------------------------------
 # Model performance
 # --------------------------------------------------
 
-st.subheader("📊 Model Performance")
+st.subheader("📈 Model Performance")
 
 metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
 
 with metric_col1:
-    st.metric("Accuracy", "94.00%")
+
+    st.metric(
+        "Accuracy",
+        "94.00%"
+    )
 
 with metric_col2:
-    st.metric("Precision", "57.89%")
+
+    st.metric(
+        "Precision",
+        "57.89%"
+    )
 
 with metric_col3:
-    st.metric("Recall", "73.33%")
+
+    st.metric(
+        "Recall",
+        "73.33%"
+    )
 
 with metric_col4:
-    st.metric("F1 Score", "64.71%")
 
+    st.metric(
+        "F1 Score",
+        "64.71%"
+    )
 
 st.caption(
     "Evaluation performed on a held-out test set of 200 customers."
 )
-
 
 # --------------------------------------------------
 # New customer prediction
@@ -352,7 +339,6 @@ st.write(
     "churn probability, revenue at risk, and the "
     "recommended recovery action."
 )
-
 
 with st.form("customer_prediction_form"):
 
@@ -415,97 +401,150 @@ with st.form("customer_prediction_form"):
         "🔮 Predict Churn Risk"
     )
 
-
 # --------------------------------------------------
-# Prediction result
+# FastAPI prediction
 # --------------------------------------------------
 
 if predict_button:
 
-    new_customer = pd.DataFrame([{
-        "monthly_revenue": monthly_revenue,
-        "tenure_months": tenure_months,
-        "login_frequency": login_frequency,
-        "payment_delay_days": payment_delay_days,
-        "support_tickets": support_tickets,
-        "usage_score": usage_score,
-        "discount_used": discount_used
-    }])
+    try:
 
-
-    probability = model.predict_proba(
-        new_customer[features]
-    )[0][1]
-
-
-    prediction = model.predict(
-        new_customer[features]
-    )[0]
-
-
-    risk_level = get_risk_level(
-        probability
-    )
-
-
-    revenue_at_risk = (
-        monthly_revenue * probability
-    )
-
-
-    recovery_action = get_recovery_action(
-        risk_level,
-        payment_delay_days,
-        usage_score,
-        support_tickets
-    )
-
-
-    st.subheader("Prediction Result")
-
-
-    result_col1, result_col2, result_col3 = st.columns(3)
-
-
-    with result_col1:
-        st.metric(
-            "Churn Probability",
-            f"{probability * 100:.2f}%"
+        response = requests.post(
+            "http://127.0.0.1:8000/predict",
+            json={
+                "monthly_revenue": monthly_revenue,
+                "tenure_months": tenure_months,
+                "login_frequency": login_frequency,
+                "payment_delay_days": payment_delay_days,
+                "support_tickets": support_tickets,
+                "usage_score": usage_score,
+                "discount_used": discount_used
+            },
+            timeout=10
         )
 
+        response.raise_for_status()
 
-    with result_col2:
-        st.metric(
-            "Estimated Revenue at Risk",
-            f"₹{revenue_at_risk:,.2f}"
-        )
+        result = response.json()
 
+        prediction = result["churn_prediction"]
 
-    with result_col3:
-        st.metric(
-            "Risk Level",
-            risk_level
-        )
+        probability = result["churn_probability"]
 
+        revenue_at_risk = result["revenue_at_risk"]
 
-    if risk_level == "HIGH":
+        risk_level = result["risk_level"]
 
-        st.error(
-            f"Recommended Action: {recovery_action}"
-        )
+        recovery_action = result["recovery_action"]
 
-    elif risk_level == "MEDIUM":
+        # --------------------------------------------------
+        # Prediction result
+        # --------------------------------------------------
 
-        st.warning(
-            f"Recommended Action: {recovery_action}"
-        )
+        st.divider()
 
-    else:
+        st.subheader("🎯 AI Prediction Result")
 
         st.success(
-            f"Recommended Action: {recovery_action}"
+            "Prediction completed successfully using "
+            "the FastAPI ML service."
         )
 
+        result_col1, result_col2, result_col3 = st.columns(3)
+
+        with result_col1:
+
+            st.metric(
+                "Churn Probability",
+                f"{probability * 100:.2f}%"
+            )
+
+        with result_col2:
+
+            st.metric(
+                "Monthly Revenue at Risk",
+                f"₹{revenue_at_risk:,.2f}"
+            )
+
+        with result_col3:
+
+            st.metric(
+                "Customer Risk",
+                risk_level
+            )
+
+        st.divider()
+
+        if prediction == 1:
+
+            st.error(
+                "🚨 HIGH CHURN RISK\n\n"
+                "This customer has a high probability "
+                "of leaving. Immediate retention or "
+                "recovery action is recommended."
+            )
+
+        else:
+
+            st.success(
+                "✅ LOW CHURN RISK\n\n"
+                "This customer currently shows a low "
+                "probability of churn. No immediate "
+                "recovery action is required."
+            )
+
+        if risk_level == "HIGH":
+
+            st.error(
+                f"💼 Recommended Business Action: "
+                f"{recovery_action}"
+            )
+
+        elif risk_level == "MEDIUM":
+
+            st.warning(
+                f"💼 Recommended Business Action: "
+                f"{recovery_action}"
+            )
+
+        else:
+
+            st.success(
+                f"💼 Recommended Business Action: "
+                f"{recovery_action}"
+            )
+
+        st.caption(
+            "Prediction generated by the Random Forest "
+            "model through the FastAPI backend."
+        )
+
+    except requests.exceptions.ConnectionError:
+
+        st.error(
+            "❌ FastAPI server is not running.\n\n"
+            "Start it using:\n\n"
+            "python -m uvicorn src.api:app --reload"
+        )
+
+    except requests.exceptions.Timeout:
+
+        st.error(
+            "❌ FastAPI request timed out. "
+            "Please check whether the API server is running."
+        )
+
+    except requests.exceptions.RequestException as e:
+
+        st.error(
+            f"❌ API request failed: {e}"
+        )
+
+    except Exception as e:
+
+        st.error(
+            f"❌ Prediction error: {e}"
+        )
 
 # --------------------------------------------------
 # Footer
@@ -515,5 +554,5 @@ st.divider()
 
 st.caption(
     "AI Revenue Recovery | "
-    "Random Forest + Revenue Risk Analytics"
+    "Random Forest + FastAPI + Revenue Risk Analytics"
 )
