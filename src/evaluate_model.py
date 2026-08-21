@@ -13,16 +13,20 @@ from sklearn.metrics import (
 
 
 # --------------------------------------------------
-# Load dataset and trained model
+# Load large dataset and model
 # --------------------------------------------------
 
-data = pd.read_csv("data/customer_revenue_data.csv")
+data = pd.read_csv(
+    "data/customer_revenue_data_large.csv"
+)
 
-model = joblib.load("models/churn_model.pkl")
+model = joblib.load(
+    "models/churn_model_large.pkl"
+)
 
 
 # --------------------------------------------------
-# Define features and target
+# Features and target
 # --------------------------------------------------
 
 features = [
@@ -36,34 +40,38 @@ features = [
 ]
 
 X = data[features]
+
 y = data["churn_risk"]
 
 
 # --------------------------------------------------
-# Create the same test split used during training
+# Same train-test split
 # --------------------------------------------------
 
 X_train, X_test, y_train, y_test = train_test_split(
     X,
     y,
-    test_size=0.2,
+    test_size=0.20,
     random_state=42,
     stratify=y
 )
 
 
 # --------------------------------------------------
-# Make predictions
+# Predictions
 # --------------------------------------------------
 
 y_pred = model.predict(X_test)
 
 
 # --------------------------------------------------
-# Calculate evaluation metrics
+# Metrics
 # --------------------------------------------------
 
-accuracy = accuracy_score(y_test, y_pred)
+accuracy = accuracy_score(
+    y_test,
+    y_pred
+)
 
 precision = precision_score(
     y_test,
@@ -89,13 +97,28 @@ f1 = f1_score(
 # --------------------------------------------------
 
 print("\n======================================")
-print("        MODEL EVALUATION")
+print("       LARGE MODEL EVALUATION")
 print("======================================")
 
-print("Accuracy :", round(accuracy, 4))
-print("Precision:", round(precision, 4))
-print("Recall   :", round(recall, 4))
-print("F1 Score :", round(f1, 4))
+print(
+    "Accuracy :",
+    round(accuracy, 4)
+)
+
+print(
+    "Precision:",
+    round(precision, 4)
+)
+
+print(
+    "Recall   :",
+    round(recall, 4)
+)
+
+print(
+    "F1 Score :",
+    round(f1, 4)
+)
 
 
 # --------------------------------------------------
@@ -140,7 +163,6 @@ importance = pd.DataFrame({
     "Importance": model.feature_importances_
 })
 
-
 importance = importance.sort_values(
     by="Importance",
     ascending=False
@@ -152,7 +174,9 @@ print("FEATURE IMPORTANCE")
 print("======================================")
 
 print(
-    importance.to_string(index=False)
+    importance.to_string(
+        index=False
+    )
 )
 
 print("\n======================================")

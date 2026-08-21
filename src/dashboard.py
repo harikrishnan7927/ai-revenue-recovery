@@ -15,12 +15,16 @@ st.set_page_config(
 
 
 # --------------------------------------------------
-# Load dataset and trained model
+# Load large dataset and model
 # --------------------------------------------------
 
-data = pd.read_csv("data/customer_revenue_data.csv")
+data = pd.read_csv(
+    "data/customer_revenue_data_large.csv"
+)
 
-model = joblib.load("models/churn_model.pkl")
+model = joblib.load(
+    "models/churn_model_large.pkl"
+)
 
 
 # --------------------------------------------------
@@ -310,7 +314,33 @@ st.write(
 
 
 # --------------------------------------------------
-# NEW CUSTOMER PREDICTION
+# Model performance
+# --------------------------------------------------
+
+st.subheader("📊 Model Performance")
+
+metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
+
+with metric_col1:
+    st.metric("Accuracy", "94.00%")
+
+with metric_col2:
+    st.metric("Precision", "57.89%")
+
+with metric_col3:
+    st.metric("Recall", "73.33%")
+
+with metric_col4:
+    st.metric("F1 Score", "64.71%")
+
+
+st.caption(
+    "Evaluation performed on a held-out test set of 200 customers."
+)
+
+
+# --------------------------------------------------
+# New customer prediction
 # --------------------------------------------------
 
 st.divider()
@@ -319,7 +349,8 @@ st.header("🧑‍💼 New Customer Churn Prediction")
 
 st.write(
     "Enter customer information below to estimate "
-    "churn risk and potential revenue loss."
+    "churn probability, revenue at risk, and the "
+    "recommended recovery action."
 )
 
 
@@ -332,7 +363,7 @@ with st.form("customer_prediction_form"):
         monthly_revenue = st.number_input(
             "Monthly Revenue (₹)",
             min_value=0.0,
-            value=500.0,
+            value=1000.0,
             step=50.0
         )
 
@@ -346,7 +377,7 @@ with st.form("customer_prediction_form"):
         login_frequency = st.number_input(
             "Login Frequency",
             min_value=0,
-            value=10,
+            value=15,
             step=1
         )
 
@@ -386,7 +417,7 @@ with st.form("customer_prediction_form"):
 
 
 # --------------------------------------------------
-# New customer prediction result
+# Prediction result
 # --------------------------------------------------
 
 if predict_button:
@@ -437,7 +468,6 @@ if predict_button:
 
 
     with result_col1:
-
         st.metric(
             "Churn Probability",
             f"{probability * 100:.2f}%"
@@ -445,7 +475,6 @@ if predict_button:
 
 
     with result_col2:
-
         st.metric(
             "Estimated Revenue at Risk",
             f"₹{revenue_at_risk:,.2f}"
@@ -453,16 +482,29 @@ if predict_button:
 
 
     with result_col3:
-
         st.metric(
             "Risk Level",
             risk_level
         )
 
 
-    st.success(
-        f"Recommended Action: {recovery_action}"
-    )
+    if risk_level == "HIGH":
+
+        st.error(
+            f"Recommended Action: {recovery_action}"
+        )
+
+    elif risk_level == "MEDIUM":
+
+        st.warning(
+            f"Recommended Action: {recovery_action}"
+        )
+
+    else:
+
+        st.success(
+            f"Recommended Action: {recovery_action}"
+        )
 
 
 # --------------------------------------------------
@@ -473,5 +515,5 @@ st.divider()
 
 st.caption(
     "AI Revenue Recovery | "
-    "Machine Learning + Business Risk Analytics"
+    "Random Forest + Revenue Risk Analytics"
 )

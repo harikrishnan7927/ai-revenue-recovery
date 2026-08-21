@@ -1,16 +1,23 @@
 import pandas as pd
+import joblib
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report
-import joblib
 
 
-# 1. Load dataset
-data = pd.read_csv("data/customer_revenue_data.csv")
+# --------------------------------------------------
+# Load large dataset
+# --------------------------------------------------
+
+data = pd.read_csv(
+    "data/customer_revenue_data_large.csv"
+)
 
 
-# 2. Select input features
+# --------------------------------------------------
+# Features
+# --------------------------------------------------
+
 features = [
     "monthly_revenue",
     "tenure_months",
@@ -21,44 +28,98 @@ features = [
     "discount_used"
 ]
 
+
 X = data[features]
+
 y = data["churn_risk"]
 
 
-# 3. Split data into training and testing sets
+# --------------------------------------------------
+# Train-test split
+# --------------------------------------------------
+
 X_train, X_test, y_train, y_test = train_test_split(
     X,
     y,
-    test_size=0.2,
+    test_size=0.20,
     random_state=42,
     stratify=y
 )
 
 
-# 4. Create Random Forest model
+# --------------------------------------------------
+# Create Random Forest model
+# --------------------------------------------------
+
 model = RandomForestClassifier(
-    n_estimators=100,
-    random_state=42
+    n_estimators=200,
+    max_depth=8,
+    min_samples_split=5,
+    min_samples_leaf=2,
+    random_state=42,
+    class_weight="balanced"
 )
 
 
-# 5. Train model
-model.fit(X_train, y_train)
+# --------------------------------------------------
+# Train model
+# --------------------------------------------------
+
+model.fit(
+    X_train,
+    y_train
+)
 
 
-# 6. Make predictions
-y_pred = model.predict(X_test)
+# --------------------------------------------------
+# Save model
+# --------------------------------------------------
+
+model_path = "models/churn_model_large.pkl"
+
+joblib.dump(
+    model,
+    model_path
+)
 
 
-# 7. Evaluate model
-accuracy = accuracy_score(y_test, y_pred)
+# --------------------------------------------------
+# Display information
+# --------------------------------------------------
 
-print("Model Accuracy:", accuracy)
-print("\nClassification Report:")
-print(classification_report(y_test, y_pred, zero_division=0))
+print("\n======================================")
+print("      MODEL TRAINING COMPLETE")
+print("======================================")
 
+print(
+    "Total customers:",
+    len(data)
+)
 
-# 8. Save trained model
-joblib.dump(model, "models/churn_model.pkl")
+print(
+    "Training samples:",
+    len(X_train)
+)
 
-print("\nModel saved successfully to models/churn_model.pkl")
+print(
+    "Testing samples:",
+    len(X_test)
+)
+
+print(
+    "High-risk customers:",
+    int(y.sum())
+)
+
+print(
+    "Low-risk customers:",
+    int((y == 0).sum())
+)
+
+print("\nModel:")
+print("Random Forest Classifier")
+
+print("\nModel saved to:")
+print(model_path)
+
+print("\n======================================")
